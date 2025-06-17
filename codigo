@@ -1,1 +1,189 @@
+import time
+from datetime import datetime
+from typing import Dict, Any
 
+class SistemaEnergia:
+    def __init__(self):
+        """Nosso sistema de energia começa aqui, configurando os dispositivos básicos"""
+        # Cada dispositivo tem: prioridade (1=essencial, 2=importante, 3=opcional), 
+        # status (ligado/desligado) e seu consumo em kWh
+        self.cargas = {
+            "geladeira": {"prioridade": 1, "ativa": True, "consumo": 0.5},  
+            "roteador": {"prioridade": 1, "ativa": True, "consumo": 0.1},    
+            "ar_condicionado": {"prioridade": 2, "ativa": True, "consumo": 1.5},  
+            "tv": {"prioridade": 2, "ativa": True, "consumo": 0.3},          
+            "iluminacao": {"prioridade": 3, "ativa": True, "consumo": 0.2}   
+        }
+        
+        # Começamos com a bateria em 50% (5 kWh de 10 kWh totais)
+        self.nivel_bateria = 50.0
+        self.capacidade_bateria = 10.0
+        
+        # Flag para controlar se estamos simulando o consumo
+        self.simulando = False
+
+    def mostrar_status(self):
+        """Mostra um resumo completo do estado atual do sistema"""
+        # Calcula o consumo somando apenas dos dispositivos que estão ligados
+        consumo_total = sum(
+            carga["consumo"] 
+            for carga in self.cargas.values() 
+            if carga["ativa"]  # Soma apenas se estiver ativo
+        )
+        
+        # Mostra informações básicas do sistema
+        print(f"\n📊 Status do Sistema - {datetime.now().strftime('%H:%M:%S')}")
+        print(f"🔋 Bateria: {self.nivel_bateria:.1f}% ({self.nivel_bateria/100*self.capacidade_bateria:.2f} kWh)")
+        print(f"⚡ Consumo total: {consumo_total:.2f} kWh")
+        
+        # Lista todos os dispositivos com seus status
+        print("\n🔌 Cargas:")
+        for nome, carga in self.cargas.items():
+            # Usa emojis para mostrar visualmente se está ativo ou não
+            status = "✅ ATIVA" if carga["ativa"] else "❌ DESATIVADA"
+            print(f" - {nome.upper():<15} (Prioridade {carga['prioridade']}, Consumo: {carga['consumo']:.1f} kWh): {status}")
+
+    def comando_virtual(self, cmd: str):
+        """Interpreta e executa os comandos do usuário"""
+        cmd = cmd.lower().strip()  # Padroniza o comando (minúsculas, sem espaços extras)
+        
+        # Dicionário de comandos válidos e suas ações correspondentes
+        if cmd == "economizar energia":
+            return self._economizar_energia()
+        elif cmd == "ativar tudo":
+            return self._ativar_tudo()
+        elif cmd == "simular consumo":
+            return self._simular_consumo()
+        elif cmd == "status":
+            self.mostrar_status()
+            return ""
+        elif cmd.startswith("ligar "):
+            return self._alterar_status_dispositivo(cmd[6:], True)
+        elif cmd.startswith("desligar "):
+            return self._alterar_status_dispositivo(cmd[9:], False)
+        elif cmd == "ajuda":
+            return self._exibir_comandos()
+        else:
+            print(f"\n⚠ Comando não reconhecido. Digite 'ajuda' para ver as opções.")
+            return ""
+
+    def _simular_consumo(self) -> str:
+        """Simula o consumo de energia em tempo real, mostrando como a bateria diminui"""
+        if self.simulando:
+            return "A simulação já está rodando! (Pressione Ctrl+C para parar)"
+            
+        print("\n🔌 Iniciando simulação de consumo...")
+        print("Mostrando o consumo a cada 3 segundos...")
+        print("Pressione Ctrl+C a qualquer momento para parar")
+        
+        self.simulando = True
+        
+        try:
+            while self.simulando and self.nivel_bateria > 0:
+                # Calcula o consumo atual somando apenas os dispositivos ligados
+                consumo_atual = sum(
+                    carga["consumo"] 
+                    for carga in self.cargas.values() 
+                    if carga["ativa"]
+                )
+                
+                # Reduz a bateria proporcionalmente ao consumo
+                # Cada 0.1 kWh de consumo reduz 1% da bateria
+                self.nivel_bateria = max(0, self.nivel_bateria - consumo_atual * 0.1)
+                
+                # Mostra o status atual
+                print(f"\n⏱️ {datetime.now().strftime('%H:%M:%S')}")
+                print(f"⚡ Consumo atual: {consumo_atual:.2f} kWh")
+                print(f"🔋 Bateria restante: {self.nivel_bateria:.1f}%")
+                
+                # Espera 3 segundos antes da próxima atualização
+                time.sleep(3)
+                
+            if self.nivel_bateria <= 0:
+                print("\n⚠️ Atenção: Bateria esgotada!")
+                self.simulando = False
+                
+        except KeyboardInterrupt:
+            print("\n🛑 Simulação interrompida pelo usuário.")
+            self.simulando = False
+            
+        return ""
+
+    def _economizar_energia(self) -> str:
+        """Desliga automaticamente os dispositivos não essenciais para economizar energia"""
+        for nome, carga in self.cargas.items():
+            if carga["prioridade"] >= 2:  # Desliga prioridades 2 e 3
+                carga["ativa"] = False
+                
+        # Mostra quais dispositivos foram desligados
+        dispositivos_desligados = [
+            nome for nome, carga in self.cargas.items() 
+            if carga["prioridade"] >= 2 and not carga["ativa"]
+        ]
+        
+        return (f"Modo economia ativado! Desligados: {', '.join(dispositivos_desligados)}")
+
+    def _ativar_tudo(self) -> str:
+        """Liga todos os dispositivos do sistema"""
+        for carga in self.cargas.values():
+            carga["ativa"] = True
+        return "Todos os dispositivos foram ligados!"
+
+    def _alterar_status_dispositivo(self, dispositivo: str, ligar: bool) -> str:
+        """Altera o status de um dispositivo específico"""
+        if dispositivo in self.cargas:
+            self.cargas[dispositivo]["ativa"] = ligar
+            acao = "ligado" if ligar else "desligado"
+            return f"Dispositivo {dispositivo} {acao} com sucesso!"
+        return f"Dispositivo '{dispositivo}' não encontrado. Verifique o nome."
+
+    def _exibir_comandos(self) -> str:
+        """Mostra uma lista dos comandos disponíveis com explicações simples"""
+        comandos = [
+            ("📊 status", "Mostra o status atual do sistema"),
+            ("🛠  economizar energia", "Desliga dispositivos não-essenciais"),
+            ("⚡ ativar tudo", "Liga todos os dispositivos"),
+            ("🔌 simular consumo", "Mostra o consumo em tempo real"),
+            ("🔌 ligar [nome]", "Liga um dispositivo específico"),
+            ("🔌 desligar [nome]", "Desliga um dispositivo específico"),
+            ("❓ ajuda", "Mostra esta lista de comandos"),
+            ("🛑 sair", "Encerra o sistema")
+        ]
+        
+        print("\n📋 Comandos Disponíveis:")
+        print("-" * 40)
+        for cmd, desc in comandos:
+            print(f"{cmd:<22} → {desc}")
+        print("-" * 40)
+        
+        return ""
+
+if __name__ == "__main__":
+    sistema = SistemaEnergia()
+    
+    print("\n🔌 Bem-vindo ao Sistema de Controle de Energia!")
+    print("Digite 'ajuda' para ver os comandos disponíveis\n")
+    
+    sistema.mostrar_status()
+
+    while True:
+        try:
+            cmd = input("\n⌨️  Comando: ").strip()
+            if cmd.lower() == "sair":
+                if sistema.simulando:
+                    sistema.simulando = False
+                    print("⏹ Parando simulação...")
+                print("\n✅ Sistema encerrado. Até logo!")
+                break
+                
+            resposta = sistema.comando_virtual(cmd)
+            if resposta:
+                print(resposta)
+                
+        except KeyboardInterrupt:
+            if sistema.simulando:
+                sistema.simulando = False
+                print("\n⏹ Simulação interrompida")
+            else:
+                print("\n🛑 Operação cancelada pelo usuário")
+            continue
