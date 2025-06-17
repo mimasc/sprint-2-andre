@@ -1,67 +1,42 @@
 # sprint-2-andre: mirella mascarenhas; guilherme tamai; caio castelão; vitor komura; andre nobrega; andre gouveia
-# Diagrama de Arquitetura Funcional
-┌──────────────────────────────┐
-│      Usuário / Assistente    │
-└────────────┬─────────────────┘
-             │
-             ▼
-   comando_virtual(comando)
-             │
-    ┌────────┼──────────┐
-    ▼        ▼          ▼
-_economizar_energia()   _ativar_tudo()
-    ▼                   │
- _atualizar_sistema()   │
-                        ▼
-         _simular_ciclo() (modo automático)
-                        │
-        ┌───────────────┴───────────────┐
-        ▼                               ▼
-_analisar_consumo()           _salvar_dados()
-                                        │
-                              ┌─────────┴──────────┐
-                              ▼                    ▼
-                 dados_energia.json         log_energia.csv
 
-# Diagrama de Fluxo __main__
+# Sistema de Controle de Energia Residencial
+# Um sistema interativo em Python para simular e gerenciar o consumo de energia em uma residência. Ideal para fins educacionais, demonstrações ou prototipagem de lógica de economia de energia.
 
-Início
-  │
-  ▼
-Instancia SistemaEnergiaInteligente
-  │
-  ├──► Exibe Status Inicial
-  │
-  ├──► Exibe Lista de Comandos
-  │
-  ▼
-Loop: Aguardando Comando
-  │
-  ├───► Se comando == "sair"
-  │         └──► Encerra
-  │
-  └───► sistema.comando_virtual(cmd)
-              │
-              ├── Atualiza Sistema
-              ├── Salva Dados
-              └── (Exibe status ou executa ação)
+#Funcionalidades:
 
-# Diagrama de Fluxo _simular_ciclo()
+# Monitoramento do consumo total de energia
+# Simulação em tempo real da descarga da bateria
+# Visualização do status de todos os dispositivos
+# Modo de economia de energia (desativa dispositivos não essenciais)
+# Ligar e desligar dispositivos específicos
+# Interface via linha de comando com comandos simples
 
-_simular_ciclo()
-  │
-  ├──► _simular_geracao_solar()
-  │
-  ├──► Calcula saldo = geração - consumo
-  │
-  ├──► Atualiza nível da bateria com saldo
-  │
-  ├──► Se bateria <= 30%
-  │         └── Desliga cargas de prioridade > 2
-  │
-  ├──► Se bateria >= 80%
-  │         └── Liga cargas de prioridade <= 2
-  │
-  ├──► _atualizar_sistema()
-  └──► analisar_consumo()
+#Como funciona:
+
+#O sistema gerencia uma lista de dispositivos domésticos, cada um com:
+
+#Prioridade (1 = essencial, 2 = importante, 3 = opcional)
+#Status (ligado/desligado)
+#Consumo de energia (em kWh)
+
+#Estrutura do sistema: 
+
+SistemaEnergia
+├── cargas (dict)
+│   ├── geladeira (prioridade 1, 0.5 kWh)
+│   ├── roteador (prioridade 1, 0.1 kWh)
+│   ├── ar_condicionado (prioridade 2, 1.5 kWh)
+│   ├── tv (prioridade 2, 0.3 kWh)
+│   └── iluminacao (prioridade 3, 0.2 kWh)
+├── nivel_bateria (float)
+├── simulando (bool)
+└── Métodos:
+    ├── mostrar_status()
+    ├── comando_virtual()
+    ├── _simular_consumo()
+    ├── _economizar_energia()
+    ├── _ativar_tudo()
+    ├── _alterar_status_dispositivo()
+    └── _exibir_comandos()
 
