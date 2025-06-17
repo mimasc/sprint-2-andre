@@ -40,3 +40,71 @@ SistemaEnergia
     ├── _alterar_status_dispositivo()
     └── _exibir_comandos()
 
+#Diagrama de Arquitetura:
+
+┌──────────────────────────────┐
+│      Usuário / Assistente    │
+└────────────┬─────────────────┘
+             │
+             ▼
+   comando_virtual(comando)
+             │
+    ┌────────┼──────────┐
+    ▼        ▼          ▼
+_economizar_energia()   _ativar_tudo()
+    ▼                   │
+ _atualizar_sistema()   │
+                        ▼
+         _simular_ciclo() (modo automático)
+                        │
+        ┌───────────────┴───────────────┐
+        ▼                               ▼
+_analisar_consumo()           _salvar_dados()
+                                        │
+                              ┌─────────┴──────────┐
+                              ▼                    ▼
+                 dados_energia.json         log_energia.csv
+
+#Diagrama de Fluxo – Execução Principal:
+
+Início
+  │
+  ▼
+Instancia SistemaEnergia
+  │
+  ├─► mostrar_status()
+  │
+  ▼
+Loop até "sair":
+  │
+  ├─► Lê comando do usuário
+  │
+  ├─► comando_virtual(cmd)
+  │     ├─ "economizar energia" → _economizar_energia()
+  │     ├─ "ativar tudo"        → _ativar_tudo()
+  │     ├─ "simular consumo"    → _simular_consumo()
+  │     ├─ "status"             → mostrar_status()
+  │     ├─ "ligar [nome]"       → _alterar_status_dispositivo()
+  │     ├─ "desligar [nome]"    → _alterar_status_dispositivo()
+  │     └─ "ajuda"              → _exibir_comandos()
+  │
+  └─► Imprime resposta (se houver)
+
+
+#Diagrama de Fluxo – Simulação de Consumo:
+
+_simular_consumo()
+  │
+  ├─ Verifica se já está simulando
+  ├─ Define simulando = True
+  │
+  ▼
+Loop enquanto simulando e bateria > 0:
+  │
+  ├─ Calcula consumo atual (somente cargas ativas)
+  ├─ Reduz nível da bateria (consumo * 0.1)
+  ├─ Mostra horário, consumo, bateria
+  └─ Aguarda 3 segundos
+  ▼
+Se bateria <= 0:
+  └─ Mostra aviso de bateria esgotada
